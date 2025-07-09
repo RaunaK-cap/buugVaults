@@ -16,11 +16,23 @@ datasource db {
 
 model usersdata {
   id    Int  @id @default(autoincrement())
-  firstname  String
-  lastname String
+  name  String
   email   String @unique
-  password String
+  codes   codedata[]
 
+}
+
+
+model codedata {
+  id Int @id @default(autoincrement())
+  title String
+  code String
+  usererror String
+  solutions String
+  links String?
+
+  UserID   Int
+  user usersdata  @relation(fields: [UserID], references: [id])
 }
 
 
