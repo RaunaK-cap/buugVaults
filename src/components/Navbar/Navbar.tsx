@@ -3,7 +3,7 @@
 import React from 'react'
 import { GrStorage } from "react-icons/gr";
 
-import { signOut   , useSession, SessionProvider } from "next-auth/react"
+import { signOut   , useSession, SessionProvider, signIn } from "next-auth/react"
 import { useRouter } from 'next/navigation'
 
 
@@ -40,7 +40,9 @@ export function Home (){
         { status === "authenticated" ? ( <button 
         onClick={()=> signOut({ callbackUrl:"/"})}
         className='p-2 px-4 bg-gradient-to-r from-emerald-300 to-yellow-600 hover:from-emerald-200 hover:to-yellow-400  text-black cursor-pointer rounded-lg'> Logout</button>):( <button 
-        onClick={()=> router.push("/api/auth/signin") }
+        onClick={()=> signIn("google" , {
+          callbackUrl:"/trackerpage"
+        }) }
         className='p-2 px-4 bg-gradient-to-r from-emerald-300 to-yellow-600 hover:from-emerald-200 hover:to-yellow-400  text-black cursor-pointer rounded-lg'> Get started </button>)}
       
       </div>

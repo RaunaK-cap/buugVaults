@@ -1,92 +1,71 @@
 import NextAuth, { type NextAuthOptions } from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
 import GitHubProvider from "next-auth/providers/github"
-import prisma from "@/lib/prisma"
-
-import bcrypt from "bcryptjs"
-import { error } from "console"
-import { NextResponse } from "next/server"
-
+import GoogleProvider from "next-auth/providers/google";
+import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export const authOptions: NextAuthOptions = {
 
     providers: [
-        // Credentials Provider for email/password authentication
-        CredentialsProvider({
-            name: "credentials",
-            credentials: {
-                email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" },
-            },
-            async authorize(credentials) {
-                try {
-                    if (!credentials?.email || !credentials?.password) {
-                        return null
-
-                    }
-
-                    const user = await prisma.usersdata.findFirst({
-                        where: {
-                            email: credentials?.email
-
-                        }
-                    })
-
-                    if (!user?.email || !user.password) {
-                        throw new Error("no accound found please sign up first ")
-                    }
-
-                    const ispassword = await bcrypt.compare(credentials.password, user.password)
-                    if (!ispassword) {
-                        throw new Error("please enter the correct password")
-                    }
-
-                    console.log("authenticated sucessfully ")
-
-                    return {
-                        id: user.id,
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email
-                    }
-                } catch (error) {
-                    console.log(  "your errors:",error.message)
-                    throw error
-                }},
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!
         }),
 
         // GitHub OAuth Provider
+
         GitHubProvider({
             clientId: process.env.GITHUB_ID!,
             clientSecret: process.env.GITHUB_SECRET!,
         }),
     ],
 
-    session: {
-        strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+    session:{
+        strategy:"jwt"
     },
 
-    callbacks: {
-        // JWT callback - runs whenever JWT is created/updated
-        async jwt({ token, user, account }) {
-            if (user) {
-                token.id = user.id;
-            }
-            return token;
-        },
+    callbacks:{
+        async signIn(params){
+            const existinguser = await prisma.usersdata.findFirst({
+                where:{
+                    email:params.user.email!
+                }
+            })
 
-        // Session callback - runs whenever session is accessed
-        async session({ session, token }) {
-            if (token) {
-                session.user!.id = token.id as string;
+            if(!existinguser){
+                const storinguserdata = await prisma.usersdata.create({
+                    data:{
+                         email:params.user.email ?? "",
+                         name:params.user.name ?? ""
+                    }
+                })
+                 
+                if(!storinguserdata){
+                   throw new Error("error while login ..")
+                }
             }
-            return session;
+                return true
         },
+        async jwt({ token , user }){
+            if(user){
+                    const dbuserid = await prisma.usersdata.findFirst({
+                        where:{
+                            email:user.email!
+                        }
+                    })
+                    token.id = dbuserid?.id
+            }
+            return token
+
+        },
+        async session ({ session , token }){
+            if(session.user){
+                session.user.id  = token.id
+            }
+            return session
+        }
     },
-
-
-
+    
     secret: process.env.NEXTAUTH_SECRET,
 }
 

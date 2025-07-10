@@ -1,15 +1,29 @@
 "use client";
+
 import React from "react";
 import { GrStorage } from "react-icons/gr";
 import { Badge } from "@/components/ui/badge";
 import { FaFireAlt } from "react-icons/fa";
 import { Input  } from "@/components/ui/input";
+
 import Link from "next/link";
 import { AiOutlineThunderbolt } from "react-icons/ai";
 import { CiSaveUp2 } from "react-icons/ci";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {  signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-const page = () => {
+
+export default function Page (){
+  const session = useSession()
+  console.log(session.data?.user?.id)
+
+  const router = useRouter()
+if(session.status === "unauthenticated"){
+ router.push("/")
+}
+
+
   return (
     <div className="min-h-screen w-full bg-black absolute">
       <main className="">
@@ -28,13 +42,12 @@ const page = () => {
             </Badge>
           </div>
           <div className="text-gray-900  flex items-center gap-4 pl-4 pr-4">
-            <button className="p-1 bg-neutral-800 rounded-lg px-2 text-sm">
             
-              Dark
-            </button>
-            <button className="p-1 bg-black text-white border border-gray-800 px-2 rounded-lg hover:cursor-pointer hover:bg-yellow-600 text-sm">
+            <button 
+            onClick={()=> signOut({callbackUrl:"/"})}
+            className="p-1 bg-yellow-500 text-white border border-gray-800 px-2 rounded-lg hover:cursor-pointer hover:bg-yellow-600 text-sm">
               
-              Log out
+              Logout
             </button>
           </div>
 
@@ -155,4 +168,4 @@ const page = () => {
   );
 };
 
-export default page;
+
